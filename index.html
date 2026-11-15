@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NonnaStep</title>
+  
+  <!-- PWA Links -->
+  <link rel="manifest" href="/NonnaStep/manifest.json">
+  <meta name="theme-color" content="#F3F0E8">
+  
+  <style>
+    /* ---------- Palette ---------- */
+    :root {
+      --ivory: #F3F0E8;
+      --ivory-warm: #F7F3E9;
+      --sage: #A7B49A;
+      --sage-deep: #94A388;
+      --beige: #D9C9B5;
+      --terracotta: #C58F7B;
+      --terracotta-soft: #CE9A86;
+      --ink: #4A443C;
+      --ink-soft: #7C7568;
+      --shadow-soft: 0 6px 24px rgba(74, 68, 60, 0.06);
+      --shadow-lift: 0 10px 28px rgba(74, 68, 60, 0.09);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+
+    body {
+      background-color: var(--ivory);
+      background-image: radial-gradient(ellipse at 50% 35%, var(--ivory-warm) 0%, var(--ivory) 70%);
+      color: var(--ink);
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    /* ---------- The Room ---------- */
+    main {
+      position: relative;
+      width: 100%;
+      max-width: 680px;
+      background-color: rgba(255, 252, 245, 0.65);
+      border-radius: 32px;
+      padding: 32px 40px 40px;
+      box-shadow: var(--shadow-soft);
+      text-align: center;
+      animation: fadeIn 1.2s ease both;
+      min-height: 480px; 
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Shared Page Transitions */
+    .page {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      padding: 32px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      transition: opacity 0.6s ease, transform 0.6s ease;
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .page.hidden {
+      opacity: 0;
+      transform: scale(0.98);
+      pointer-events: none;
+    }
+
+    /* ---------- HOMEPAGE ---------- */
+    .scene {
+      position: relative;
+      height: 80px;
+      margin: 0 auto 16px;
+      width: 100%;
+      max-width: 280px;
+      overflow: hidden;
+    }
+
+    .scene svg { width: 100%; height: 120px; position: absolute; bottom: 0; left: 0; }
+
+    .sun {
+      transform-origin: 180px 130px;
+      animation: breathe 7s ease-in-out infinite;
+    }
+
+    @keyframes breathe {
+      0%, 100% { transform: scale(1); opacity: 0.95; }
+      50%      { transform: scale(1.03); opacity: 1; }
+    }
+
+    .drift { animation: drift 14s linear infinite; opacity: 0.7; }
+    .drift.d2 { animation-duration: 18s; animation-delay: -4s; opacity: 0.5; }
+    .drift.d3 { animation-duration: 22s; animation-delay: -9s; opacity: 0.4; }
+
+    @keyframes drift {
+      0%   { transform: translate(0, 0); }
+      50%  { transform: translate(6px, -8px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    .greeting {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 2.2rem;
+      font-weight: 400;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .prompt {
+      font-size: 1rem;
+      color: var(--ink-soft);
+      letter-spacing: 0.3px;
+      margin-bottom: 32px;
+      min-height: 24px;
+    }
+
+    .choices {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 24px;
+      width: 100%;
+    }
+
+    .choice {
+      flex: 1;
+      background-color: rgba(217, 201, 181, 0.35);
+      border: none;
+      border-radius: 20px;
+      padding: 16px 12px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      color: var(--ink);
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      box-shadow: 0 2px 6px rgba(74, 68, 60, 0.03);
+      transition: background-color 0.4s ease, color 0.4s ease, transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .choice:hover {
+      background-color: rgba(217, 201, 181, 0.55);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lift);
+    }
+
+    .choice.selected {
+      background-color: var(--sage);
+      color: #FFFFFF;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 22px rgba(167, 180, 154, 0.35);
+    }
+
+    .choice.selected:hover { background-color: var(--sage-deep); }
+
+    .response {
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      line-height: 1.6;
+      letter-spacing: 0.3px;
+      padding: 0 16px;
+      margin-bottom: 20px;
+      transition: opacity 0.5s ease;
+    }
+
+    .response.fading { opacity: 0; }
+
+    .go {
+      background-color: var(--terracotta-soft);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 999px;
+      padding: 14px 40px;
+      font-size: 1rem;
+      font-family: inherit;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(197, 143, 123, 0.28);
+      opacity: 0;
+      transform: translateY(8px) scale(0.96);
+      pointer-events: none;
+      transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.3s ease;
+    }
+
+    .go.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+
+    .go:hover { background-color: var(--terracotta); }
+
+    /* ---------- LOADING PAGE ---------- */
+    .icon-circle {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background-color: rgba(217, 201, 181, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.5);
+      position: relative;
+    }
+
+    .loading-icon {
+      width: 48px;
+      height: 48px;
+      position: absolute;
+      opacity: 0;
+      transform: scale(0.8);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      stroke: var(--sage-deep);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .loading-icon.active { opacity: 1; transform: scale(1); }
+
+    .loading-text {
+      font-size: 1.1rem;
+      color: var(--ink-soft);
+      letter-spacing: 0.5px;
+      min-height: 30px;
+      transition: opacity 0.4s ease;
+    }
+
+    .loading-text.fading { opacity: 0; }
+
+    /* ---------- FOCUS PAGE ---------- */
+    .focus-phrase-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 20px;
+      width: 100%;
+    }
+
+    .focus-phrase {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.6rem;
+      line-height: 1.6;
+      color: var(--ink);
+      opacity: 1;
+      transition: opacity 1s ease;
+    }
+
+    .focus-phrase.fading { opacity: 0; }
+
+    /* ---------- The Circular Long Press Button ---------- */
+    .stop-btn-wrapper {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .ring-wrapper {
+      position: relative;
+      width: 72px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .stop-progress {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      border-radius: 50%;
+      background: conic-gradient(var(--sage) 0%, transparent 0%);
+      -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+      mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+      pointer-events: none;
+      transition: background 0.1s linear;
+    }
+
+    .stop-btn {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background-color: rgba(217, 201, 181, 0.4);
+      border: none;
+      cursor: pointer;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s ease, background-color 0.3s ease;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+      z-index: 2;
+    }
+
+    .stop-btn:active { transform: scale(0.96); background-color: rgba(217, 201, 181, 0.6); }
+
+    .stop-icon {
+      width: 18px;
+      height: 18px;
+      background-color: var(--ink-soft);
+      border-radius: 4px;
+      transition: background-color 0.3s ease;
+    }
+
+    .stop-hint {
+      font-size: 0.8rem;
+      color: var(--ink-soft);
+      margin-top: 16px;
+      letter-spacing: 0.5px;
+    }
+
+    /* ---------- CLOSING PAGE ---------- */
+    .closing-message {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.8rem;
+      line-height: 1.5;
+      color: var(--ink);
+      margin-bottom: 40px;
+      max-width: 400px;
+      text-align: center;
+      transition: opacity 0.6s ease;
+    }
+
+    .closing-actions {
+      display: flex;
+      gap: 16px;
+    }
+
+    .btn-primary {
+      background-color: var(--terracotta-soft);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 999px;
+      padding: 14px 32px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(197, 143, 123, 0.28);
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .btn-primary:hover { background-color: var(--terracotta); transform: translateY(-2px); }
+
+    .btn-secondary {
+      background-color: transparent;
+      color: var(--ink-soft);
+      border: 1.5px solid var(--beige);
+      border-radius: 999px;
+      padding: 14px 32px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      background-color: rgba(217, 201, 181, 0.3);
+      color: var(--ink);
+      transform: translateY(-2px);
+    }
+
+    /* ---------- Mobile adjustments ---------- */
+    @media (max-width: 600px) {
+      main { padding: 24px 20px 32px; border-radius: 26px; min-height: 420px; }
+      .page { padding: 24px 20px; }
+      .greeting { font-size: 1.8rem; }
+      .choices { flex-direction: column; gap: 12px; }
+      .response { min-height: 80px; }
+      .scene { height: 60px; margin-bottom: 12px; }
+      .focus-phrase { font-size: 1.3rem; }
+      .closing-message { font-size: 1.5rem; }
+      .closing-actions { flex-direction: column; width: 100%; max-width: 250px; gap: 12px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    
+    <!-- ================= HOMEPAGE ================= -->
+    <div class="page" id="homePage">
+      <div class="scene" aria-hidden="true">
+        <svg viewBox="0 0 360 140" role="presentation">
+          <defs>
+            <radialGradient id="glow" cx="50%" cy="100%" r="70%">
+              <stop offset="0%"  stop-color="#F4DCC8" stop-opacity="0.9"/>
+              <stop offset="60%" stop-color="#F4DCC8" stop-opacity="0.25"/>
+              <stop offset="100%" stop-color="#F4DCC8" stop-opacity="0"/>
+            </radialGradient>
+            <linearGradient id="sunFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"  stop-color="#E6B79E"/>
+              <stop offset="100%" stop-color="#C58F7B"/>
+            </linearGradient>
+          </defs>
+          <ellipse cx="180" cy="130" rx="160" ry="60" fill="url(#glow)"/>
+          <g class="sun">
+            <path d="M 120 130 A 60 60 0 0 1 240 130 Z" fill="url(#sunFill)"/>
+          </g>
+          <line x1="60" y1="130" x2="300" y2="130" stroke="#BFAE98" stroke-width="1.2" stroke-linecap="round"/>
+          <path d="M 40 138 Q 120 118 200 132 T 320 134" fill="none" stroke="#A7B49A" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
+          <path d="M 60 144 Q 150 128 230 140 T 330 142" fill="none" stroke="#A7B49A" stroke-width="1.2" stroke-linecap="round" opacity="0.45"/>
+          <circle class="drift d1" cx="90"  cy="60" r="2.2" fill="#C58F7B" opacity="0.55"/>
+          <circle class="drift d2" cx="265" cy="45" r="1.8" fill="#A7B49A" opacity="0.6"/>
+          <circle class="drift d3" cx="220" cy="80" r="1.4" fill="#D9C9B5" opacity="0.7"/>
+        </svg>
+      </div>
+
+      <h1 class="greeting" id="greeting">Good Morning!</h1>
+      <p class="prompt" id="prompt">What would you like to do today?</p>
+
+      <div class="choices">
+        <button class="choice" data-choice="focusing">Focusing</button>
+        <button class="choice" data-choice="present">Simply Being Present</button>
+        <button class="choice" data-choice="else">Something Else</button>
+      </div>
+
+      <p class="response" id="response">No rush. Take a moment.</p>
+      <button class="go" id="goButton">Let's Go!</button>
+    </div>
+
+    <!-- ================= LOADING PAGE ================= -->
+    <div class="page hidden" id="loadingPage">
+      <div class="icon-circle">
+        <svg class="loading-icon" id="icon-breath" viewBox="0 0 24 24">
+          <path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2" />
+          <path d="M9.6 4.6A2 2 0 1 1 11 8H2" />
+          <path d="M12.6 19.4A2 2 0 1 0 14 16H2" />
+        </svg>
+        <svg class="loading-icon" id="icon-bottle" viewBox="0 0 24 24">
+          <path d="M8 6h8v12a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V6z" />
+          <path d="M10 3h4v3h-4z" />
+          <path d="M8 10h8" />
+        </svg>
+        <svg class="loading-icon" id="icon-pencil" viewBox="0 0 24 24">
+          <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+          <path d="M15 5l4 4" />
+        </svg>
+      </div>
+      <p class="loading-text" id="loadingText">Taking a deep breath...</p>
+    </div>
+
+    <!-- ================= FOCUS PAGE ================= -->
+    <div class="page hidden" id="focusPage">
+      <div class="focus-phrase-container">
+        <p class="focus-phrase" id="focusPhrase">I'm right here with you.</p>
+      </div>
+      
+      <div class="stop-btn-wrapper">
+        <div class="ring-wrapper">
+          <div class="stop-progress" id="stopProgress"></div>
+          <button class="stop-btn" id="stopBtn" aria-label="Long press to finish">
+            <div class="stop-icon"></div>
+          </button>
+        </div>
+        <p class="stop-hint">Long press to finish</p>
+      </div>
+    </div>
+
+    <!-- ================= CLOSING PAGE ================= -->
+    <div class="page hidden" id="closingPage">
+      <p class="closing-message" id="closingMessage">You showed up today, and that matters a lot.</p>
+      <div class="closing-actions">
+        <button class="btn-secondary" id="homeBtn">Return Home</button>
+        <button class="btn-primary" id="restartBtn">Start Again</button>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    // ---------- Shared Elements ----------
+    const homePage = document.getElementById("homePage");
+    const loadingPage = document.getElementById("loadingPage");
+    const focusPage = document.getElementById("focusPage");
+    const closingPage = document.getElementById("closingPage");
+    const allPages = [homePage, loadingPage, focusPage, closingPage];
+
+    function showPage(pageToShow) {
+      allPages.forEach(p => p.classList.add("hidden"));
+      pageToShow.classList.remove("hidden");
+    }
+
+    // ---------- Homepage Logic ----------
+    const greetingEl = document.getElementById("greeting");
+    const hour = new Date().getHours();
+    if (hour < 12)      greetingEl.textContent = "Good Morning!";
+    else if (hour < 18) greetingEl.textContent = "Good Afternoon!";
+    else                greetingEl.textContent = "Good Evening!";
+
+    const prompts = [
+      "What would you like to do today?",
+      "How are you feeling right now?",
+      "What shall we focus on today?",
+      "Where would you like to start?",
+      "What's on your mind today?"
+    ];
+    document.getElementById("prompt").textContent = prompts[Math.floor(Math.random() * prompts.length)];
+
+    const phrases = {
+      focusing: "I would love to get things done with you! Let's try for a minute? We can always go at your own pace.",
+      present:  "There's nothing to finish right now. Let's just breathe and stay a little while. I'm right here with you.",
+      else:     "Whatever is on your mind is welcome here. Let's take one small step together, however that looks today.",
+      none:     "No rush. Take a moment."
+    };
+
+    const noneResponses = [
+      "No rush. Take a moment.",
+      "I'm here whenever you're ready.",
+      "Take a breath. There's no hurry."
+    ];
+    phrases.none = noneResponses[Math.floor(Math.random() * noneResponses.length)];
+    
+    const responseEl = document.getElementById("response");
+    responseEl.textContent = phrases.none;
+
+    const choices = document.querySelectorAll(".choice");
+    const goButton = document.getElementById("goButton");
+    let selectedChoice = null;
+
+    function updateResponse(text) {
+      responseEl.classList.add("fading");
+      setTimeout(() => {
+        responseEl.textContent = text;
+        responseEl.classList.remove("fading");
+      }, 250);
+    }
+
+    choices.forEach((button) => {
+      button.addEventListener("click", () => {
+        const value = button.dataset.choice;
+        if (selectedChoice === value) {
+          selectedChoice = null;
+          button.classList.remove("selected");
+          updateResponse(phrases.none);
+          goButton.classList.remove("visible");
+          return;
+        }
+        selectedChoice = value;
+        choices.forEach((b) => b.classList.remove("selected"));
+        button.classList.add("selected");
+        updateResponse(phrases[value]);
+        goButton.classList.add("visible");
+      });
+    });
+
+    // ---------- Loading Sequence Logic ----------
+    const loadingText = document.getElementById("loadingText");
+    const sequence = [
+      { text: "Taking a deep breath...", iconId: "icon-breath" },
+      { text: "Filling water bottle...", iconId: "icon-bottle" },
+      { text: "Planning the first step...", iconId: "icon-pencil" }
+    ];
+
+    let sequenceIndex = 0;
+    let loadingInterval = null;
+
+    function changeLoadingState(index) {
+      const current = sequence[index];
+      loadingText.classList.add("fading");
+      document.querySelectorAll(".loading-icon").forEach(el => el.classList.remove("active"));
+
+      setTimeout(() => {
+        loadingText.textContent = current.text;
+        loadingText.classList.remove("fading");
+        document.getElementById(current.iconId).classList.add("active");
+      }, 400);
+    }
+
+    function startLoadingSequence() {
+      sequenceIndex = 0;
+      clearInterval(loadingInterval);
+      loadingText.style.opacity = "1";
+      document.querySelectorAll(".loading-icon").forEach(el => el.classList.remove("active"));
+
+      changeLoadingState(0);
+
+      loadingInterval = setInterval(() => {
+        sequenceIndex++;
+        
+        if (sequenceIndex >= sequence.length) {
+          clearInterval(loadingInterval);
+          loadingText.textContent = "Ready.";
+          loadingText.style.opacity = "1";
+          
+          setTimeout(() => {
+            showPage(focusPage);
+            startFocusSequence();
+          }, 1500);
+
+          return;
+        }
+        changeLoadingState(sequenceIndex);
+      }, 2000);
+    }
+
+    goButton.addEventListener("click", () => {
+      showPage(loadingPage);
+      startLoadingSequence();
+    });
+
+    // ---------- Focus Page Logic ----------
+    const focusPhraseEl = document.getElementById("focusPhrase");
+    const focusPhrases = [
+      "I'm right here with you.",
+      "One small step is enough.",
+      "You don't have to do this perfectly.",
+      "Just this moment. Nothing else.",
+      "It's okay to go slowly.",
+      "You showed up. That's the hardest part."
+    ];
+    let focusPhraseIndex = 0;
+    let focusInterval = null;
+
+    function cycleFocusPhrase() {
+      focusPhraseEl.classList.add("fading");
+      setTimeout(() => {
+        focusPhraseIndex = (focusPhraseIndex + 1) % focusPhrases.length;
+        focusPhraseEl.textContent = focusPhrases[focusPhraseIndex];
+        focusPhraseEl.classList.remove("fading");
+      }, 1000); 
+    }
+
+    function startFocusSequence() {
+      clearInterval(focusInterval);
+      focusPhraseIndex = 0;
+      focusPhraseEl.textContent = focusPhrases[0];
+      focusPhraseEl.classList.remove("fading");
+      
+      focusInterval = setInterval(cycleFocusPhrase, 12000);
+    }
+
+    // ---------- Long Press Logic ----------
+    const stopBtn = document.getElementById("stopBtn");
+    const stopProgress = document.getElementById("stopProgress");
+    let pressTimer;
+    let progressAnimation;
+    const requiredHoldTime = 1500; 
+
+    function startPress(e) {
+      e.preventDefault(); 
+      
+      stopProgress.style.background = "conic-gradient(var(--sage) 0%, transparent 0%)";
+
+      let startTime = performance.now();
+      function updateProgress(currentTime) {
+        let elapsed = currentTime - startTime;
+        let percentage = Math.min((elapsed / requiredHoldTime) * 100, 100);
+        
+        stopProgress.style.background = `conic-gradient(var(--sage) ${percentage}%, transparent ${percentage}%)`;
+
+        if (percentage < 100) {
+          progressAnimation = requestAnimationFrame(updateProgress);
+        }
+      }
+      progressAnimation = requestAnimationFrame(updateProgress);
+
+      pressTimer = setTimeout(() => {
+        finishFocusSession();
+      }, requiredHoldTime);
+    }
+
+    function cancelPress() {
+      clearTimeout(pressTimer);
+      cancelAnimationFrame(progressAnimation);
+      stopProgress.style.background = "conic-gradient(var(--sage) 0%, transparent 0%)";
+    }
+
+    stopBtn.addEventListener("mousedown", startPress);
+    stopBtn.addEventListener("touchstart", startPress);
+    
+    stopBtn.addEventListener("mouseup", cancelPress);
+    stopBtn.addEventListener("mouseleave", cancelPress);
+    stopBtn.addEventListener("touchend", cancelPress);
+    stopBtn.addEventListener("touchcancel", cancelPress);
+
+    // ---------- Closing Page Logic ----------
+    const closingMessageEl = document.getElementById("closingMessage");
+    const closingPhrases = [
+      "I am so proud of you.",
+      "You showed up today, and that matters a lot.",
+      "Thank you for spending this time with me.",
+      "Whatever you did today is enough.",
+      "You made a little progress today.",
+      "Now it's time to rest.",
+      "You can always come back whenever you're ready."
+    ];
+
+    function finishFocusSession() {
+      clearInterval(focusInterval);
+      cancelPress(); 
+      
+      const randomPhrase = closingPhrases[Math.floor(Math.random() * closingPhrases.length)];
+      closingMessageEl.textContent = randomPhrase;
+      
+      showPage(closingPage);
+    }
+
+    document.getElementById("homeBtn").addEventListener("click", () => {
+      selectedChoice = null;
+      choices.forEach(b => b.classList.remove("selected"));
+      goButton.classList.remove("visible");
+      updateResponse(phrases.none);
+      
+      showPage(homePage);
+    });
+
+    document.getElementById("restartBtn").addEventListener("click", () => {
+      showPage(loadingPage);
+      startLoadingSequence();
+    });
+
+    // ---------- Service Worker Registration ----------
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/NonnaStep/sw.js").then((registration) => {
+          console.log("NonnaStep Service Worker registered with scope:", registration.scope);
+        }).catch((error) => {
+          console.log("Service Worker registration failed:", error);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
