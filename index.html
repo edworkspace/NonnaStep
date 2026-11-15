@@ -46,18 +46,21 @@
       position: relative;
       width: 100%;
       max-width: 680px;
+      min-height: 480px;
+      height: min(700px, calc(100dvh - 48px));
+
       background-color: rgba(255, 252, 245, 0.65);
       border-radius: 32px;
       padding: 32px 40px 40px;
       box-shadow: var(--shadow-soft);
       text-align: center;
       animation: fadeIn 1.2s ease both;
-      height: 480px; /* Changed from min-height to height */
-      max-height: 90vh; /* Prevents it from being taller than the screen */
+
       display: flex;
       flex-direction: column;
       justify-content: center;
-      overflow: hidden; /* Main stays hidden, the page inside will scroll */
+
+      overflow: hidden;
     }
 
     @keyframes fadeIn {
@@ -78,6 +81,7 @@
       opacity: 1;
       transform: scale(1);
       overflow-y: auto; /* Allow internal scrolling if needed */
+      overscroll-behavior: contain;
     }
 
     .page.hidden {
@@ -390,33 +394,41 @@
 
     /* ---------- Mobile adjustments ---------- */
     @media (max-width: 600px) {
-      main { 
-        padding: 24px 20px 32px; 
-        border-radius: 26px; 
-        height: auto; /* Let it grow with content on mobile */
-        max-height: 85vh; /* But don't exceed 85% of the screen height */
+      main {
+        padding: 20px 16px;
+        border-radius: 26px;
+        min-height: 0;
+        height: calc(100dvh - 32px);
       }
-      .page { 
-        padding: 24px 20px; 
-        /* Change from center to flex-start so the top never gets cut off */
-        justify-content: flex-start; 
+
+      .page {
+        padding: 24px 20px;
       }
-      /* Add margin-top to center it visually when there is space */
-      .page > *:first-child { margin-top: auto; }
-      .page > *:last-child { margin-bottom: auto; }
-      
+
       .greeting { font-size: 1.8rem; }
-      .choices { flex-direction: column; gap: 12px; }
+
+      .choices {
+        flex-direction: column;
+        gap: 12px;
+      }
+
       .response { min-height: 80px; }
-      .scene { height: 60px; margin-bottom: 12px; }
+
+      .scene {
+        height: 60px;
+        margin-bottom: 12px;
+      }
+
       .focus-phrase { font-size: 1.3rem; }
       .closing-message { font-size: 1.5rem; }
-      .closing-actions { flex-direction: column; width: 100%; max-width: 250px; gap: 12px; }
-      
-      /* Add extra padding at the bottom of the scroll area */
-      .page { padding-bottom: 40px; }
-    }
 
+      .closing-actions {
+        flex-direction: column;
+        width: 100%;
+        max-width: 250px;
+        gap: 12px;
+      }
+    }
     @media (prefers-reduced-motion: reduce) {
       * { animation: none !important; transition-duration: 0.01ms !important; }
     }
